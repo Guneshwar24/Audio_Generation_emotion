@@ -127,3 +127,5 @@ def encoder(InputShape, EncodeSize):
 def autoEncoder(Encoder, Generator):
     model = Sequential()
     model.add(Encoder)
+    model.add(Generator)
+    return model
