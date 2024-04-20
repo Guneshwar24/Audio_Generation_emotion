@@ -9,73 +9,42 @@ from keras.callbacks import (EarlyStopping, LearningRateScheduler, ModelCheckpoi
 
 from ganModels import *
 from ganSetup import *
-
 class AudioGAN:
-    def __init__(self, label="AudioGAN"):
-        print(f"{label} initialized")
-        
-        # Audio Configurations
-        self.sr = 16000  # Sample rate
-        self.duration = 4  # Duration in seconds
-        self.hop_length = 512  # Hop length for STFT
-        self.n_mels = 128  # Number of Mel bands
-        self.n_fft = 2048  # FFT window size
-        self.noise_dim = 100  # Dimension of the noise vector for the generator
-        
-        self.input_shape = (self.n_mels, 1 + int(np.floor(self.sr * self.duration / self.hop_length)), 1)
-        
-        # Initialize models
-        self.encoder = encoder(self.input_shape, 100)
-        self.generator = generator(self.noise_dim, self.input_shape)
-        self.discriminator = discriminator(self.input_shape)
-        self.stackGenDis = stacked_G_D(self.generator, self.discriminator)
-        self.autoencoder = autoEncoder(self.encoder, self.generator)
-        
+    def __init__(self, label="label"):
+        print(label, "audioGan.py")
+        # Generate models
+        self.enc = encoder(AUDIO_SHAPE, ENCODE_SIZE)
+        self.gen = generator(NOISE_DIM, AUDIO_SHAPE)
+        self.dis = discriminator(AUDIO_SHAPE)
+        self.stackGenDis = stacked_G_D(self.gen, self.dis)
+        self.autoencoder = autoEncoder(self.enc, self.gen)  
+
+        # Compile models with their own optimizer instances
+        gen_optimizer = Adam(learning_rate=0.0002, beta_1=0.9)
+        dis_optimizer = Adam(learning_rate=0.0002, beta_1=0.9)
+        ae_optimizer = Adam(learning_rate=0.0002, beta_1=0.9)
+        stacked_optimizer = Adam(learning_rate=0.0002, beta_1=0.9)
+
+        # Set different learning rates for the generator and discriminator
+        gen_learning_rate = 0.00002  # Example value from the paper
+        dis_learning_rate = 0.00002  # Example value from the paper
+
+        gen_optimizer = Adam(learning_rate=gen_learning_rate, beta_1=0.5, beta_2=0.99)
+        dis_optimizer = Adam(learning_rate=dis_learning_rate, beta_1=0.5, beta_2=0.99)
+
+        self.gen.compile(loss='binary_crossentropy', optimizer=gen_optimizer, metrics=['accuracy'])
+        self.dis.compile(loss='binary_crossentropy', optimizer=dis_optimizer, metrics=['accuracy'])
+
+        # self.gen.compile(loss='binary_crossentropy', optimizer=gen_optimizer, metrics=['accuracy'])
+        # self.dis.compile(loss='binary_crossentropy', optimizer=dis_optimizer, metrics=['accuracy'])
+        self.autoencoder.compile(loss='mse', optimizer=ae_optimizer, metrics=['accuracy'])
+        self.stackGenDis.compile(loss='binary_crossentropy', optimizer=stacked_optimizer, metrics=['accuracy'])
+
         # Set training data
-        self.load_data()
-        
-        # Compile models
-        self.compile_models()
-    
-    def compile_models(self):
-        dis_optimizer = Adam(learning_rate=0.0002, beta_1=0.5)
-        gen_optimizer = Adam(learning_rate=0.0002, beta_1=0.5)
-        auto_optimizer = Adam(learning_rate=0.0002, beta_1=0.5)
-        enc_optimizer = Adam(learning_rate=0.0002, beta_1=0.5)
-        
-        self.discriminator.compile(loss='binary_crossentropy', optimizer=dis_optimizer, metrics=['accuracy'])
-        self.generator.compile(loss='binary_crossentropy', optimizer=gen_optimizer)
-        self.autoencoder.compile(loss='mse', optimizer=auto_optimizer)
-        self.stackGenDis.compile(loss='binary_crossentropy', optimizer=enc_optimizer, metrics=['accuracy'])
+        self.trainData = normalization(load_train_data(AUDIO_SHAPE))
 
-    def train_gan(self, epochs=50, batch_size=32):
-        print("Starting GAN training...")
-        for epoch in range(epochs):
-            for _ in range(len(self.trainData) // batch_size):
-                idx = np.random.randint(0, len(self.trainData) - batch_size)
-                real_data = self.trainData[idx:idx + batch_size]
-
-                noise = np.random.normal(0, 1, (batch_size, self.noise_dim))
-                fake_data = self.generator.predict(noise)
-
-                real_labels = np.ones((batch_size, 1))
-                fake_labels = np.zeros((batch_size, 1))
-
-                d_loss_real = self.discriminator.train_on_batch(real_data, real_labels)
-                d_loss_fake = self.discriminator.train_on_batch(fake_data, fake_labels)
-                d_loss = 0.5 * np.add(d_loss_real, d_loss_fake)
-
-                g_loss = self.stackGenDis.train_on_batch(noise, real_labels)
-
-                if (epoch + 1) % 10 == 0:
-                    print(f"Epoch {epoch + 1}/{epochs} - Discriminator Loss: {d_loss}, Generator Loss: {g_loss}")
-
-    def load_data(self):
-        # Load training data from predefined functions
-        raw_data = load_mel_spectrograms()
-        self.trainData = normalization(raw_data)
-        print(f"Training data loaded and normalized, shape: {self.trainData.shape}")
-
+        self.disLossHist = []
+        self.genLossHist = []
 
     # Train GAN
     def train_gan(self, epochs = 20, batch = 32, save_interval = 2):
@@ -91,13 +60,11 @@ class AudioGAN:
             
             gen_noise = np.random.normal(0, 1, (halfBatch, NOISE_DIM))
             syntetic_audios = self.gen.predict(gen_noise)
-
             # Combine real and generated audios for discriminator training
             # x_combined_batch = np.concatenate((legit_audios, syntetic_audios))
             # y_combined_batch = np.concatenate((np.ones((halfBatch, 1)), np.zeros((halfBatch, 1))))
             x_combined_batch = np.concatenate((legit_audios, syntetic_audios), axis=0)
             y_combined_batch = np.concatenate((np.ones((halfBatch, 1)), np.zeros((halfBatch, 1))), axis=0)
-
             # Train discriminator on combined batch
             d_loss = self.dis.train_on_batch(x_combined_batch, y_combined_batch)
             
@@ -107,12 +74,10 @@ class AudioGAN:
             # Include discriminator loss
             d_loss_mean = np.mean(d_loss)
             self.disLossHist.append(d_loss_mean)
-
             # Train stacked generator
             noise = np.random.normal(0, 1, (batch, NOISE_DIM))
             y_mislabled = np.ones((batch, 1))
             g_loss = self.stackGenDis.train_on_batch(noise, y_mislabled)
-
             # Update generator Weights
             self.gen.set_weights(self.stackGenDis.layers[0].get_weights())
             
@@ -143,23 +108,16 @@ class AudioGAN:
         plt.gcf().set_size_inches(25, 5)
         plt.subplots_adjust(wspace=0.3,hspace=0.3)
         plt.show()
-       
+
     # Train autoencoder
-    def train_autoencoder(self, epochs=10, save_internal=2, batch_size=32):
-        print("Starting autoencoder training...")
-        for epoch in range(epochs):
-            for _ in range(len(self.trainData) // batch_size):
-                idx = np.random.randint(0, len(self.trainData) - batch_size)
-                legit_audios = self.trainData[idx:idx + batch_size]
+    def train_autoencoder(self, epochs = 20,  save_internal = 2, batch = 32):
+        for cnt in range(epochs):
+            random_index = np.random.randint(0, len(self.trainData) - batch)
+            legit_audios = self.trainData[random_index: int(random_index + batch)]
 
-                print("Shape before reshaping:", legit_audios.shape)
-                print("Expected elements:", np.prod(legit_audios.shape))
-                print("Target shape elements:", np.prod((batch_size,) + AUDIO_SHAPE))
-
-                try:
-                    legit_audios = legit_audios.reshape((batch_size,) + AUDIO_SHAPE)
-                    loss = self.autoencoder.train_on_batch(legit_audios, legit_audios)
-                    if (epoch + 1) % save_internal == 0:
-                        print(f"Epoch: {epoch + 1}/{epochs}, Loss: {loss}")
-                except ValueError as e:
-                    print(f"Reshape error: {e}")
+            # Ensure the audio data is in the correct shape (batch_size, AUDIO_SHAPE, 1)
+            legit_audios = legit_audios.reshape((-1, AUDIO_SHAPE, 1))  # Reshape for 1D convolution
+            loss = self.autoencoder.train_on_batch(legit_audios, legit_audios)
+            # print("loss object",loss[0], loss[1])
+            if cnt % save_internal == 0 : 
+                print("Epoch: ", cnt, ", Loss: ", loss[0])
