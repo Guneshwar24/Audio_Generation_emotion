@@ -1,13 +1,7 @@
-import numpy as np
-import tensorflow as tf
-from keras import losses, models, optimizers
-from keras.optimizers import Adam
+from keras import models
 from keras.models import Sequential
-from keras.layers import (Layer, Input, Flatten, Dropout, BatchNormalization, Reshape,
-                          MaxPool1D, AveragePooling1D, AveragePooling2D, GlobalAveragePooling1D, GlobalAveragePooling2D,
-                          Conv2DTranspose, Conv2D, Conv1D, Dense, LeakyReLU, ReLU, SpectralNormalization, Activation,
-                          LSTM, SimpleRNNCell, UpSampling1D, )
-from keras.initializers import RandomNormal
+from keras.layers import (Input, Flatten, Dropout, BatchNormalization, Reshape,
+                          Conv1D, Concatenate, Dense, LeakyReLU, UpSampling1D, )
 
 def generator(NoiseDim, OutputShape):
     depth = 256
@@ -31,38 +25,44 @@ def generator(NoiseDim, OutputShape):
     model.add(Reshape((OutputShape, 1)))
     return model
 
+def modified_generator(noise_dim, features_dim, output_shape):
+    model = models.Sequential()
+    # Combine noise and encoded features
+    model.add(Concatenate())
+    initial_size = output_shape // 16
+    depth = 256
+    model.add(Dense(initial_size * depth))
+    model.add(Reshape((initial_size, depth)))
+    model.add(BatchNormalization())
+    model.add(LeakyReLU(alpha=0.2))
+    model.add(Dropout(rate=0.1))
+
+    # Upsampling blocks
+    for _ in range(4):
+        model.add(UpSampling1D(size=2))
+        depth //= 2
+        model.add(Conv1D(depth, kernel_size=25, padding='same'))
+        model.add(BatchNormalization())
+        model.add(LeakyReLU(alpha=0.2))
+        model.add(Dropout(rate=0.1))
+
+    model.add(Conv1D(1, kernel_size=25, padding='same', activation='tanh'))
+    model.add(Reshape((output_shape, 1)))
+    return model
+
 # Discriminator Model
 def discriminator(InputShape):
-    model = models.Sequential()
+    depth = 64
 
+    model = models.Sequential()
     model.add(Input(shape=(InputShape,1)))
 
-
-    # Replace Conv2D layers with Conv1D for 1D audio processing
-    model.add(Conv1D(64, kernel_size=3, strides=2, padding='same'))
-    model.add(LeakyReLU(negative_slope=0.01))
-    model.add(BatchNormalization(momentum=0.9))
-    model.add(Dropout(0.1))
-
-    model.add(Conv1D(128, kernel_size=3, strides=2, padding='same'))
-    model.add(LeakyReLU(negative_slope=0.01))
-    model.add(BatchNormalization(momentum=0.9))
-    model.add(Dropout(0.1))
-
-    model.add(Conv1D(256, kernel_size=3, strides=2, padding='same'))
-    model.add(LeakyReLU(negative_slope=0.01))
-    model.add(BatchNormalization(momentum=0.9))
-    model.add(Dropout(0.1))
-
-    model.add(Conv1D(512, kernel_size=3, strides=2, padding='same'))
-    model.add(LeakyReLU(negative_slope=0.01))
-    model.add(BatchNormalization(momentum=0.9))
-    model.add(Dropout(0.1))
-
-    model.add(Conv1D(1024, kernel_size=3, strides=2, padding='same'))
-    model.add(LeakyReLU(negative_slope=0.01))
-    model.add(BatchNormalization(momentum=0.9))
-    model.add(Dropout(0.1))
+    for _ in range(4):  
+        depth *= 2  # Increase depth depth
+        model.add(Conv1D(depth, kernel_size=3,strides=2, padding='same'))
+        model.add(LeakyReLU(alpha=0.2))
+        model.add(BatchNormalization())
+        model.add(Dropout(rate=0.1))
 
     model.add(Flatten())
     model.add(Dense(1, activation='sigmoid'))
@@ -80,47 +80,20 @@ def stacked_G_D(Generator, Discriminator):
 
 # Encoder
 def encoder(InputShape, EncodeSize):
-    model = models.Sequential()
-
-    # Define the input layer for 1D audio data
+    depth=64
+    
+    model = Sequential()
     model.add(Input(shape=(InputShape, 1)))
 
-    # First convolutional layer
-    model.add(Conv1D(32, kernel_size=3, strides=2, padding='same'))
-    model.add(LeakyReLU(negative_slope=0.2))
-    model.add(BatchNormalization())
-    model.add(Dropout(rate=0.1))
-
-    # Second convolutional layer
-    model.add(Conv1D(64, kernel_size=3, strides=2, padding='same'))
-    model.add(LeakyReLU(negative_slope=0.2))
-    model.add(BatchNormalization())
-    model.add(Dropout(rate=0.1))
-
-    # Third convolutional layer
-    model.add(Conv1D(128, kernel_size=3, strides= 2, padding='same'))
-    model.add(LeakyReLU(negative_slope=0.2))
-    model.add(BatchNormalization())
-    model.add(Dropout(rate=0.1))
-
-    # Fourth convolutional layer
-    model.add(Conv1D(256, kernel_size=3, strides= 2, padding='same'))
-    model.add(LeakyReLU(negative_slope=0.2))
-    model.add(BatchNormalization())
-    model.add(Dropout(rate=0.1))
-
-    # Fifth convolutional layer
-    model.add(Conv1D(512, kernel_size=3, strides= 2, padding='same'))
-    model.add(LeakyReLU(negative_slope=0.2))
-    model.add(BatchNormalization())
-    model.add(Dropout(rate=0.1))
-
-    # Flatten the convolutional layer's output to feed it into the dense layer
+    for _ in range(4):  
+        depth *= 2  # Increase depth depth
+        model.add(Conv1D(depth, kernel_size=3, strides=2, padding='same'))
+        model.add(LeakyReLU(alpha=0.2))
+        model.add(BatchNormalization())
+        model.add(Dropout(rate=0.1))    
+    
     model.add(Flatten())
-
-    # Dense layer for the encoded representation
-    model.add(Dense(EncodeSize, activation='relu')) # Assuming the encoded size is 100
-
+    model.add(Dense(EncodeSize, activation='relu'))
     return model
 
 # AutoEndoder
