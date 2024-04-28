@@ -44,34 +44,35 @@ class AudioGAN:
 
     def train_autoencoder(self, train_data, epochs=20, batch_size=32):
         """ Train the autoencoder separately to minimize reconstruction error. """
-        self.autoencoder.fit(train_data, train_data, epochs=epochs, batch_size=batch_size)
+        train_data_reshaped = train_data.reshape(-1, self.config.AUDIO_SHAPE, 1)  # Add the channel dimension
+        self.autoencoder.fit(train_data_reshaped, train_data_reshaped, epochs=epochs, batch_size=batch_size)
         # Initialize the Generator after Autoencoder is trained
         print("Autoencoder training complete.")
         # After training the autoencoder, initialize the GAN generator
         self.initialize_generator_from_encoder()
 
     def initialize_generator_from_encoder(self):
-        # print("Starting weight transfer from encoder to generator.")
-        # for enc_layer, gen_layer in zip(self.enc.layers, self.gen.layers):
-        #     print(f"Checking {enc_layer.name} to {gen_layer.name}")
-        #     if len(enc_layer.get_weights()) > 0 and len(gen_layer.get_weights()) > 0:
-        #         if enc_layer.get_weights()[0].shape == gen_layer.get_weights()[0].shape:
-        #             print(f"Transferring weights from {enc_layer.name} to {gen_layer.name}")
-        #             gen_layer.set_weights(enc_layer.get_weights())
-        #         else:
-        #             print(f"Skipping weight transfer for {enc_layer.name} due to shape mismatch.")
-        #     else:
-        #         print(f"Skipping {enc_layer.name} and {gen_layer.name} as one or both do not have weights.")
+        print("Starting weight transfer from encoder to generator.")
+        for enc_layer, gen_layer in zip(self.enc.layers, self.gen.layers):
+            print(f"Checking {enc_layer.name} to {gen_layer.name}")
+            if len(enc_layer.get_weights()) > 0 and len(gen_layer.get_weights()) > 0:
+                if enc_layer.get_weights()[0].shape == gen_layer.get_weights()[0].shape:
+                    print(f"Transferring weights from {enc_layer.name} to {gen_layer.name}")
+                    gen_layer.set_weights(enc_layer.get_weights())
+                else:
+                    print(f"Skipping weight transfer for {enc_layer.name} due to shape mismatch.")
+            else:
+                print(f"Skipping {enc_layer.name} and {gen_layer.name} as one or both do not have weights.")
 
         # Transfer weights from the encoder to the generator's corresponding layers
-        encoder_weights = [layer.get_weights() for layer in self.enc.layers if len(layer.get_weights()) > 0]
-        generator_layers = [layer for layer in self.gen.layers if len(layer.get_weights()) > 0]
+        # encoder_weights = [layer.get_weights() for layer in self.enc.layers if len(layer.get_weights()) > 0]
+        # generator_layers = [layer for layer in self.gen.layers if len(layer.get_weights()) > 0]
         
-        # Assuming a similar architecture for simplicity
-        for e_weights, g_layer in zip(encoder_weights, generator_layers):
-            if e_weights[0].shape == g_layer.get_weights()[0].shape:
-                g_layer.set_weights(e_weights)
-                print(f"Weights transferred to {g_layer.name}")
+        # # Assuming a similar architecture for simplicity
+        # for e_weights, g_layer in zip(encoder_weights, generator_layers):
+        #     if e_weights[0].shape == g_layer.get_weights()[0].shape:
+        #         g_layer.set_weights(e_weights)
+        #         print(f"Weights transferred to {g_layer.name}")
                 
     
     def create_stacked_model(self, generator, discriminator):
