@@ -46,35 +46,8 @@ class AudioGAN:
         """ Train the autoencoder separately to minimize reconstruction error. """
         train_data_reshaped = train_data.reshape(-1, self.config.AUDIO_SHAPE, 1)  # Add the channel dimension
         self.autoencoder.fit(train_data_reshaped, train_data_reshaped, epochs=epochs, batch_size=batch_size)
-        # Initialize the Generator after Autoencoder is trained
         print("Autoencoder training complete.")
-        # After training the autoencoder, initialize the GAN generator
-        self.initialize_generator_from_encoder()
 
-    def initialize_generator_from_encoder(self):
-        print("Starting weight transfer from encoder to generator.")
-        for enc_layer, gen_layer in zip(self.enc.layers, self.gen.layers):
-            print(f"Checking {enc_layer.name} to {gen_layer.name}")
-            if len(enc_layer.get_weights()) > 0 and len(gen_layer.get_weights()) > 0:
-                if enc_layer.get_weights()[0].shape == gen_layer.get_weights()[0].shape:
-                    print(f"Transferring weights from {enc_layer.name} to {gen_layer.name}")
-                    gen_layer.set_weights(enc_layer.get_weights())
-                else:
-                    print(f"Skipping weight transfer for {enc_layer.name} due to shape mismatch.")
-            else:
-                print(f"Skipping {enc_layer.name} and {gen_layer.name} as one or both do not have weights.")
-
-        # Transfer weights from the encoder to the generator's corresponding layers
-        # encoder_weights = [layer.get_weights() for layer in self.enc.layers if len(layer.get_weights()) > 0]
-        # generator_layers = [layer for layer in self.gen.layers if len(layer.get_weights()) > 0]
-        
-        # # Assuming a similar architecture for simplicity
-        # for e_weights, g_layer in zip(encoder_weights, generator_layers):
-        #     if e_weights[0].shape == g_layer.get_weights()[0].shape:
-        #         g_layer.set_weights(e_weights)
-        #         print(f"Weights transferred to {g_layer.name}")
-                
-    
     def create_stacked_model(self, generator, discriminator):
         discriminator.trainable = False
         model = Sequential([generator, discriminator])
@@ -138,35 +111,7 @@ class AudioGAN:
         self.stackGenDis = self.create_stacked_model(self.gen, self.dis)
         self.initialize_models()
             
-    def train_gan(self, epochs=20, batch=32, save_interval=2):
-        # half_batch = batch // 2
-        # for epoch in range(epochs):
-        #     # Training discriminator on real and generated data
-        #     random_index = np.random.randint(0, len(self.trainData) - half_batch)
-        #     legit_audios = self.trainData[random_index: random_index + half_batch]
-        #     legit_audios = legit_audios.reshape((-1, self.config.AUDIO_SHAPE, 1))
-        #     gen_noise = np.random.normal(0, 1, (half_batch, self.config.NOISE_DIM))
-        #     synthetic_audios = self.gen.predict(gen_noise)
-        #     x_combined_batch = np.concatenate((legit_audios, synthetic_audios))
-        #     y_combined_batch = np.concatenate((np.ones((half_batch, 1)), np.zeros((half_batch, 1))))
-        #     d_loss = self.dis.train_on_batch(x_combined_batch, y_combined_batch)
-
-        #     # Append discriminator loss to history
-        #     self.disLossHist.append(d_loss[0] if isinstance(d_loss, list) else d_loss)
-
-        #     # Training generator via the stacked model
-        #     noise = np.random.normal(0, 1, (batch, self.config.NOISE_DIM))
-        #     y_mislabeled = np.ones((batch, 1))
-        #     g_loss = self.stackGenDis.train_on_batch(noise, y_mislabeled)
-
-        #     # Append generator loss to history
-        #     self.genLossHist.append(g_loss[0] if isinstance(g_loss, list) else g_loss)
-
-        #     # Logging the progress
-        #     if epoch % save_interval == 0:
-        #         self.log_progress(epoch, d_loss, g_loss)
-        #         self.show_gen_samples(4)
-        
+    def train_gan(self, epochs=20, batch=32, save_interval=2):      
         for epoch in range(epochs):
             # Sample noise as input for the generator
             noise = np.random.normal(0, 1, (batch, self.config.NOISE_DIM))

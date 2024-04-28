@@ -25,31 +25,6 @@ def generator(NoiseDim, OutputShape):
     model.add(Reshape((OutputShape, 1)))
     return model
 
-def modified_generator(noise_dim, features_dim, output_shape):
-    model = models.Sequential()
-    # Combine noise and encoded features
-    model.add(Concatenate())
-    initial_size = output_shape // 16
-    depth = 256
-    model.add(Dense(initial_size * depth))
-    model.add(Reshape((initial_size, depth)))
-    model.add(BatchNormalization())
-    model.add(LeakyReLU(alpha=0.2))
-    model.add(Dropout(rate=0.1))
-
-    # Upsampling blocks
-    for _ in range(4):
-        model.add(UpSampling1D(size=2))
-        depth //= 2
-        model.add(Conv1D(depth, kernel_size=25, padding='same'))
-        model.add(BatchNormalization())
-        model.add(LeakyReLU(alpha=0.2))
-        model.add(Dropout(rate=0.1))
-
-    model.add(Conv1D(1, kernel_size=25, padding='same', activation='tanh'))
-    model.add(Reshape((output_shape, 1)))
-    return model
-
 # Discriminator Model
 def discriminator(InputShape):
     depth = 64
