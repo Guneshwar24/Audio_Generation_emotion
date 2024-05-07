@@ -1,5 +1,5 @@
 # Audio_Generation
-Generate new audio samples using GANs and Style Transfer Methods
+Generate new audio samples using GANs and using Autoencoder as baseline.
 
 # Dataset 
 First, the dataset from CMU-MOSEI is present in "Dataset" in the same directory of this repository. It is cleaned as well as manipulated to fit into suitably.
