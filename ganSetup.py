@@ -18,10 +18,31 @@ class GANConfig:
     LABEL = "fname"
 
 def load_train_data(input_length):
-    train = pd.read_csv(GANConfig.DATASET_PATH + "mosei_train_updated.csv")
+    # train = pd.read_csv(GANConfig.DATASET_PATH + "mosei_train_updated.csv")
+    train = pd.read_csv("mosei_train_filtered.csv")
     X = np.empty((len(train), input_length))
     for i, fname in enumerate(train['fname']):
         file_path = GANConfig.DATASET_PATH + "audio_train/" + fname
+        try:
+            data, _ = librosa.load(file_path, sr=GANConfig.SAMPLE_RATE, res_type='kaiser_fast')
+            if len(data) > input_length:
+                offset = np.random.randint(len(data) - input_length)
+                data = data[offset:offset + input_length]
+            else:
+                data = np.pad(data, (0, input_length - len(data)), 'constant')
+            X[i] = data
+        except Exception as e:
+            print(f"Error loading {file_path}: {e}")
+            X[i] = np.zeros(input_length)
+    return X
+
+def load_test_data(input_length):
+    # test = pd.read_csv(GANConfig.DATASET_PATH + "mosei_test_updated.csv")
+    test = pd.read_csv("mosei_test_filtered.csv")
+    print("length of test files", len(test))
+    X = np.empty((len(test), input_length))
+    for i, fname in enumerate(test['fname']):
+        file_path = GANConfig.DATASET_PATH + "audio_test/" + fname
         try:
             data, _ = librosa.load(file_path, sr=GANConfig.SAMPLE_RATE, res_type='kaiser_fast')
             if len(data) > input_length:
