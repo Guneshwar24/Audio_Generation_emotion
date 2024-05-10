@@ -71,7 +71,7 @@ def encoder(InputShape, EncodeSize):
     model.add(Dense(EncodeSize, activation='relu'))
     return model
 
-# AutoEndoder
+# AutoEncoder
 def autoEncoder(Encoder, Generator):
     model = Sequential()
     model.add(Encoder)
