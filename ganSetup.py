@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import os
 import soundfile as sf
+
 class GANConfig:
     DURATION = 4
     SAMPLE_RATE = 16000

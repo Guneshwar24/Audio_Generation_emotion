@@ -1,7 +1,6 @@
-from keras import models
 from keras.models import Sequential
 from keras.layers import (Input, Flatten, Dropout, BatchNormalization, Reshape,
-                          Conv1D, Concatenate, Dense, LeakyReLU, UpSampling1D, )
+                          Conv1D, Dense, LeakyReLU, UpSampling1D, )
 
 def generator(NoiseDim, OutputShape):
     depth = 256

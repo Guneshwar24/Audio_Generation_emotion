@@ -1,14 +1,11 @@
 import numpy as numpy
-import matplotlib
-import matplotlib.pyplot as plt
-import IPython
 import IPython.display as ipd 
 import os
 from keras.optimizers import Adam
-from keras.callbacks import (EarlyStopping, LearningRateScheduler, ModelCheckpoint, TensorBoard, ReduceLROnPlateau)
 from keras.models import load_model
 from ganModels import *
 from ganSetup import *
+
 class AudioGAN:
     def __init__(self, label="AudioGAN", load=False, model_path="./models/"):
         print(label)
@@ -152,7 +149,8 @@ class AudioGAN:
                     #Appending to the variables
                     self.disLossHist.append(d_loss_val)
                     self.genLossHist.append(g_loss)
-                    print(f"Epoch: {epoch}, Discriminator loss: {d_loss_val}, Generator loss: {g_loss_val}")
+                    disLossHist_first = [loss[1] for loss in self.disLossHist]
+                    print(f"Epoch: {epoch}, Discriminator loss: {disLossHist_first}, Generator loss: {g_loss_val}")
          
 
 
