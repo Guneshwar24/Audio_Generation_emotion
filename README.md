@@ -9,5 +9,5 @@ install dependencies from requirements.txt
 >> pip install -r requirements.txt
 
 # Run
-Run jupyter notebok
+Run test.ipynb jupyter notebok:  for all things experimental and checking predictions for the GAN models 
 # Audio_Generation_emotion
