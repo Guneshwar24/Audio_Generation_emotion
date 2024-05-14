@@ -13,10 +13,10 @@ def generator(NoiseDim, OutputShape):
     model.add(Dropout(rate=0.1))
 
     # Adding more upsampling and transposed convolutional layers
-    for _ in range(4):  # Adjust the range if needed based on your output shape requirements
+    for _ in range(4):  
         model.add(UpSampling1D(size=2))
-        depth //= 2  # Reduce depth
-        model.add(Conv1D(depth, kernel_size=25, padding='same'))
+        depth //= 2  # Reducing depth
+        model.add(Conv1D(depth, strides=2, kernel_size=25, padding='same'))
         model.add(BatchNormalization())
         model.add(LeakyReLU(alpha=0.2))
         model.add(Dropout(rate=0.1))
@@ -29,11 +29,10 @@ def generator(NoiseDim, OutputShape):
 def discriminator(input_shape):
     depth = 64
     model = Sequential()
-    model.add(Input(shape=(input_shape, 1)))  # Ensure input shape is correct
-    # print("Discriminator", model.input_shape)
+    model.add(Input(shape=(input_shape, 1)))  
 
     # Adding several Conv1D layers with increasing depth
-    for i in range(4):  # Adjust the range and settings as needed for better discrimination
+    for i in range(4): 
         model.add(Conv1D(depth * (2 ** i), kernel_size=3, strides=2, padding='same'))
         model.add(LeakyReLU(alpha=0.2))
         model.add(BatchNormalization())
