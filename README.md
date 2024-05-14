@@ -14,3 +14,10 @@ install dependencies from requirements.txt
 
 # Run
 Run test.ipynb jupyter notebok:  for all things experimental and checking predictions for the GAN models 
+
+
+#Classifier repository
+https://github.com/zamud3164/Emotion_Recognition
+
+#Project Architecture
+![image](https://github.com/Guneshwar24/Audio_Generation_emotion/assets/43294135/07517137-d251-4ecb-b2f2-0419fbf977f6)
