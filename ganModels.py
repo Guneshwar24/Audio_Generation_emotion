@@ -1,6 +1,6 @@
 from keras.models import Sequential
 from keras.layers import (Input, Flatten, Dropout, BatchNormalization, Reshape,
-                          Conv1D, Dense, LeakyReLU, UpSampling1D, )
+                          Conv1D, Dense, LeakyReLU, UpSampling1D,ReLU )
 
 def generator(NoiseDim, OutputShape):
     depth = 256
@@ -9,7 +9,7 @@ def generator(NoiseDim, OutputShape):
     model.add(Dense(initial_size * depth, input_shape=(NoiseDim,)))
     model.add(Reshape((initial_size, depth)))
     model.add(BatchNormalization())
-    model.add(LeakyReLU(alpha=0.2))
+    model.add(ReLU(alpha=0.2))
     model.add(Dropout(rate=0.1))
 
     # Adding more upsampling and transposed convolutional layers
