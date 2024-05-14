@@ -9,7 +9,7 @@ def generator(NoiseDim, OutputShape):
     model.add(Dense(initial_size * depth, input_shape=(NoiseDim,)))
     model.add(Reshape((initial_size, depth)))
     model.add(BatchNormalization())
-    model.add(ReLU(alpha=0.2))
+    model.add(ReLU())
     model.add(Dropout(rate=0.1))
 
     # Adding more upsampling and transposed convolutional layers
@@ -18,7 +18,7 @@ def generator(NoiseDim, OutputShape):
         depth //= 2  # Reducing depth
         model.add(Conv1D(depth, strides=2, kernel_size=25, padding='same'))
         model.add(BatchNormalization())
-        model.add(LeakyReLU(alpha=0.2))
+        model.add(ReLU())
         model.add(Dropout(rate=0.1))
      
     model.add(Conv1D(1, kernel_size=25, padding='same', activation='tanh'))
