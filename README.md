@@ -1,6 +1,10 @@
 # Audio_Generation
 Generate new audio samples using GANs and using Autoencoder as baseline.
 
+#Models
+Download the models from link below and place them in the models folder in the repo.
+https://hioa365-my.sharepoint.com/:f:/g/personal/guman4575_oslomet_no/ErAeH_H71uVMigPFtPm661QBGb9MRwA9r7GGxXsMMlLOFA?e=lJkfE8
+
 # Dataset 
 First, the dataset from CMU-MOSEI is present in "Dataset" in the same directory of this repository. It is cleaned as well as manipulated to fit into suitably.
 
