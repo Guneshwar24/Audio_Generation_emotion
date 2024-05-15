@@ -21,9 +21,11 @@ Run test.ipynb jupyter notebok:  for all things experimental and checking predic
 # Architecture
 
 Generator
+
 ![image](https://github.com/Guneshwar24/Audio_Generation_emotion/assets/43294135/46f51d6a-4a60-445a-8566-9944fbf1ee1e)
 
 Discriminator
+
 ![image](https://github.com/Guneshwar24/Audio_Generation_emotion/assets/43294135/e0ae1ab8-ce15-4667-befd-e5075528b696)
 
 # Classifier repository
