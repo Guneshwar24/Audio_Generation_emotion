@@ -1,3 +1,6 @@
+# Project Architecture
+![image](https://github.com/Guneshwar24/Audio_Generation_emotion/assets/43294135/07517137-d251-4ecb-b2f2-0419fbf977f6)
+
 # Audio_Generation
 Generate new audio samples using GANs and using Autoencoder as baseline.
 
@@ -15,9 +18,15 @@ install dependencies from requirements.txt
 # Run
 Run test.ipynb jupyter notebok:  for all things experimental and checking predictions for the GAN models 
 
+# Architecture
+
+Generator
+![image](https://github.com/Guneshwar24/Audio_Generation_emotion/assets/43294135/46f51d6a-4a60-445a-8566-9944fbf1ee1e)
+
+Discriminator
+![image](https://github.com/Guneshwar24/Audio_Generation_emotion/assets/43294135/e0ae1ab8-ce15-4667-befd-e5075528b696)
 
 # Classifier repository
 https://github.com/zamud3164/Emotion_Recognition
 
-# Project Architecture
-![image](https://github.com/Guneshwar24/Audio_Generation_emotion/assets/43294135/07517137-d251-4ecb-b2f2-0419fbf977f6)
+
