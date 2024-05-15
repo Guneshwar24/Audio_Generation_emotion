@@ -22,47 +22,51 @@ class GANConfig:
 
 def load_train_data(input_length):
     """
-    The function `load_train_data` reads audio files from a CSV, processes them using librosa, and
-    returns a numpy array of the audio data.
+    The function `load_train_data` reads audio files, computes MFCC features, and prepares the data for
+    training by adjusting the frame length and handling errors with zero padding.
     
     :param input_length: The `input_length` parameter in the `load_train_data` function represents the
-    desired length of the audio data samples that will be loaded from the files. This parameter
-    specifies the length to which each audio sample will be either trimmed or zero-padded to ensure
-    consistency in the input data for further processing or
-    :return: The function `load_train_data` returns a NumPy array `X` containing audio data loaded from
-    files specified in the "mosei_train_filtered.csv" dataset. The audio data is processed to ensure it
-    has a specified input length, either by truncating or padding with zeros as needed. If an error
-    occurs while loading a file, the function prints an error message and fills the corresponding entry
-    in
+    number of frames you want to use for each audio sample. This parameter determines the length of the
+    input data that will be processed for each audio file
+    :return: The function `load_train_data(input_length)` returns a NumPy array `X` containing MFCC
+    features for audio files in the training dataset. The shape of the array is `(number of samples,
+    input_length, 20)`, where `input_length` is the number of frames specified as input. Each sample in
+    the array represents MFCC features for an audio file, with each frame containing
     """
     train = pd.read_csv("mosei_train_filtered.csv")
-    X = np.empty((len(train), input_length))
+    X = np.empty((len(train), input_length, 20))  # Assuming 20 MFCCs, and input_length is the number of frames
     for i, fname in enumerate(train['fname']):
         file_path = GANConfig.DATASET_PATH + "audio_train/" + fname
         try:
+            # Load and compute MFCC features
             data, _ = librosa.load(file_path, sr=GANConfig.SAMPLE_RATE, res_type='kaiser_fast')
-            if len(data) > input_length:
-                offset = np.random.randint(len(data) - input_length)
-                data = data[offset:offset + input_length]
+            # data = librosa.feature.mfcc(y=librosa.load(file_path, sr=GANConfig.SAMPLE_RATE, mono=True, res_type='kaiser_fast')[0], sr=GANConfig.SAMPLE_RATE, n_mfcc=20, n_fft=int(GANConfig.SAMPLE_RATE*0.025), hop_length=int(GANConfig.SAMPLE_RATE*0.01))
+            # Ensure the MFCC output matches the desired frame length
+            if data.shape[1] > input_length:
+                offset = np.random.randint(data.shape[1] - input_length)
+                data = data[:, offset:offset + input_length]
             else:
-                data = np.pad(data, (0, input_length - len(data)), 'constant')
-            X[i] = data
+                data = np.pad(data, ((0, 0), (0, input_length - data.shape[1])), 'constant')
+
+            X[i] = data.T  # Transpose to match the shape (64000, 20)
         except Exception as e:
             print(f"Error loading {file_path}: {e}")
-            X[i] = np.zeros(input_length)
+            X[i] = np.zeros((input_length, 20))  # Ensure zero padding matches (64000, 20) if there's an error
     return X
 
 def load_test_data(input_length):
     """
-    The function `load_test_data` reads test data from a CSV file, loads audio files, and preprocesses
-    them to a specified input length.
+    The function `load_test_data` reads audio files from a CSV file, extracts MFCC features using
+    librosa, and pads or truncates the features to match the specified input length.
     
     :param input_length: The `input_length` parameter in the `load_test_data` function represents the
-    desired length of the audio data samples that will be loaded from the test files. This parameter is
-    used to ensure that all audio samples have a consistent length for processing in the machine
-    learning model
-    :return: The function `load_test_data` returns a NumPy array `X` containing audio data from test
-    files, with each row representing the audio data for a specific file.
+    desired length of the input data for each sample. This function reads test data from a CSV file,
+    loads audio files, extracts MFCC features, and prepares the input data for a machine learning model.
+    The input data for
+    :return: The function `load_test_data(input_length)` returns a NumPy array `X` containing MFCC
+    features extracted from audio files in the "mosei_test_filtered.csv" dataset. The shape of the array
+    is `(len(test), input_length)`, where `len(test)` is the number of audio files in the test dataset
+    and `input_length` is the specified length for the MFCC features
     """
     test = pd.read_csv("mosei_test_filtered.csv")
     print("length of test files", len(test))
@@ -71,6 +75,7 @@ def load_test_data(input_length):
         file_path = GANConfig.DATASET_PATH + "audio_test/" + fname
         try:
             data, _ = librosa.load(file_path, sr=GANConfig.SAMPLE_RATE, res_type='kaiser_fast')
+            # data = librosa.feature.mfcc(y=librosa.load(file_path, sr=GANConfig.SAMPLE_RATE, mono=True, res_type='kaiser_fast')[0], sr=GANConfig.SAMPLE_RATE, n_mfcc=20, n_fft=int(GANConfig.SAMPLE_RATE*0.025), hop_length=int(GANConfig.SAMPLE_RATE*0.01))
             if len(data) > input_length:
                 offset = np.random.randint(len(data) - input_length)
                 data = data[offset:offset + input_length]

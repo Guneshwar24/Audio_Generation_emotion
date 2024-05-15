@@ -226,7 +226,7 @@ class AudioGAN:
             ipd.display(ipd.Audio(data=audio, rate=self.config.SAMPLE_RATE))
 
     # Train autoencoder
-    def train_autoencoder(self, epochs = 20,  save_internal = 2, batch = 32):
+    def train_autoencoder(self, epochs = 20,  save_internal = 2, batch_size = 32):
         """
         This function trains an autoencoder model using audio data for a specified number of epochs,
         with an option to save the model at specified intervals.
@@ -239,20 +239,20 @@ class AudioGAN:
         determines how often the model's training progress is saved or printed during training. In this
         case, the model's loss and progress will be printed every `save_internal` number of epochs,
         defaults to 2 (optional)
-        :param batch: The `batch` parameter in the `train_autoencoder` function represents the number of
+        :param batch_size: The `batch_size` parameter in the `train_autoencoder` function represents the number of
         audio samples that will be processed in each iteration during training. In this case, it is set
-        to 32, meaning that 32 audio samples will be used in each batch for training the autoencoder
+        to 32, meaning that 32 audio samples will be used in each batch_size for training the autoencoder
         model, defaults to 32 (optional)
         """
         config = GANConfig()
         for cnt in range(epochs):
-            random_index = np.random.randint(0, len(self.trainData) - batch)
-            legit_audios = self.trainData[random_index: int(random_index + batch)]
-            test_audios = self.testData[random_index: int(random_index + batch)]
+            random_index = np.random.randint(0, len(self.trainData) - batch_size)
+            legit_audios = self.trainData[random_index: int(random_index + batch_size)]
+            test_audios = self.testData[random_index: int(random_index + batch_size)]
 
-            # Ensure the audio data is in the correct shape (batch_size, AUDIO_SHAPE, 1)
+            # Ensure the audio data is in the correct shape (batch_size_size, AUDIO_SHAPE, 1)
             legit_audios = legit_audios.reshape((-1, config.AUDIO_SHAPE, 1))  # Reshape for 1D convolution
-            loss = self.autoencoder.fit(legit_audios, legit_audios, epochs, batch, shuffle=True, validation_data=(test_audios, test_audios))
+            loss = self.autoencoder.fit(legit_audios, legit_audios, epochs, batch_size, shuffle=True, validation_data=(test_audios, test_audios))
 
             if cnt % save_internal == 0 : 
                 print("Epoch: ", cnt, ", Loss: ", loss[0])
